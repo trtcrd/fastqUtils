@@ -21,9 +21,9 @@ Runs the dada2 default workflow on the demultiplexed libraries (where mixed orie
 + **dada2workflow4files()**
 Runs the dada2 default workflow on the demultiplexed libraries (where mixed orientation was accounted for)
 + **demultiplexDoublePaired()**
-Demultiplex an illumina libraries (not accounting for possible reads mixed orientation)
+Demultiplex an illumina library (not accounting for possible reads mixed orientation)
 + **demultiplexDoublePaired4files()**
-Demultiplex an illumina libraries (accounting for possible reads mixed orientation)
+Demultiplex an illumina library (accounting for possible reads mixed orientation)
 + **taggedPrimersDistrib()**
 Sample a multiplexed library and count the reads obtained for each possible combination of tagged primer
 
