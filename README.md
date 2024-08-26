@@ -54,13 +54,18 @@ ACTACTYCAAATCGG
 
 The tag-to-sample file, a .csv file
 
-```
-run,sample,forward,reverse
-library_1,sample_1,forwardPrimer-A,reversePrimer-B
-library_1,sample_2,forwardPrimer-B,reversePrimer-C
-library_2,sample_3,forwardPrimer-A,reversePrimer-B
-library_2,sample_4,forwardPrimer-B,reversePrimer-C
-```
+run|sample|forward|reverse|
+--- | --- | --- | --- |
+lib1|sample_1|V9F-A|V9R-C|
+lib1|sample_2|V9F-A|V9R-E|
+lib1|sample_3|V9F-C|V9R-B|
+lib2|sample_4|V9F-A|V9R-C|
+lib2|sample_5|V9F-A|V9R-E|
+lib2|sample_6|V9F-C|V9R-B|
+lib3|sample_7|V9F-A|V9R-C|
+lib3|sample_8|V9F-A|V9R-E|
+lib3|sample_9|V9F-C|V9R-B|
+...|...|...|...|...
 
 ## Usage example
 
