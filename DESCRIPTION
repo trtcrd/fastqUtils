@@ -1,0 +1,13 @@
+Package: fastqUtils
+Type: Package
+Title: fastqUtils: demultiplexing amplicon libraries and running the dada2 workflow
+Version: 0.1.0
+Author: Tristan Cordier
+Depends: R (>= 4.0.0)
+Maintainer: The package maintainer <trco@norceresearch.no>
+Description: A set of functions for processing fastqs file. This includes convenient functions for demultiplexing a list of amplicon libraries, and run the dada2 workflow.
+License: AGPL-3 | file LICENSE
+Encoding: UTF-8
+LazyData: true
+BugReports: https://github.com/trtcrd/fastqUtils/issues
+URL: https://github.com/trtcrd/fastqUtils
