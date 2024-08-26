@@ -35,8 +35,8 @@ The "params" file, that contains all the instructions to demultiplex the librari
 library_name|primers|R1|R2|
 --- | --- | --- | --- |
 lib1|primers_V9.fasta|lib1_R1_S1_sub.fastq.gz|lib1_R2_S1_sub.fastq.gz|
-lib2|primers_V9.fasta|lib1_R1_S2_sub.fastq.gz|lib1_R2_S2_sub.fastq.gz|
-lib3|primers_V9.fasta|lib1_R1_S3_sub.fastq.gz|lib1_R2_S3_sub.fastq.gz|
+lib2|primers_V9.fasta|lib2_R1_S2_sub.fastq.gz|lib2_R2_S2_sub.fastq.gz|
+lib3|primers_V9.fasta|lib3_R1_S3_sub.fastq.gz|lib3_R2_S3_sub.fastq.gz|
 ...|...|...|...|...
 
 The primers file, a fasta file that contains the tagged primers names and sequences.
