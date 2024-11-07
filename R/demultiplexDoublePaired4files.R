@@ -1,5 +1,7 @@
 
-demultiplexDoublePaired4files <- function(primersFile, t2s, fastqR1In, fastqR2In, allowedMis = 0, outputFolder = "demult", overwrite = F, splitHeader = " ", chunkSize = 1000000, progressBar = T) {
+demultiplexDoublePaired4files <- function(primersFile, t2s, fastqR1In, fastqR2In, allowedMis = 0, 
+                                          outputFolder = "demult", overwrite = F, splitHeader = " ", withIndels = F,
+                                          chunkSize = 1000000, progressBar = T) {
 
   ## to do, trim hoverhang, i.e. trimming the reverse complement rev primer in fwd reads ?
   ## option NOT to trim the primers
@@ -10,6 +12,30 @@ demultiplexDoublePaired4files <- function(primersFile, t2s, fastqR1In, fastqR2In
   # primersFile is a name of a fasta file
   # t2s is a tag to sample array containing a single multiplexed library "run", "sample, "forward", "reverse"
 
+  
+  ## vmatchPattern with indels allowed: the base function does not work: "vmatchPattern() does not support indels yet" ?? 
+  # found this here: https://support.bioconductor.org/p/58350/
+  vmatchPattern2 <- function(pattern, subject,
+                             max.mismatch=0, min.mismatch=0,
+                             with.indels=FALSE, fixed=TRUE,
+                             algorithm="auto")
+  {
+    if (!is(subject, "XStringSet")) subject <- Biostrings:::XStringSet(NULL, subject)
+    algo <- Biostrings:::normargAlgorithm(algorithm)
+    if (Biostrings:::isCharacterAlgo(algo)) stop("'subject' must be a single (non-empty) string ", "for this algorithm")
+    pattern <- Biostrings:::normargPattern(pattern, subject)
+    max.mismatch <- Biostrings:::normargMaxMismatch(max.mismatch)
+    min.mismatch <- Biostrings:::normargMinMismatch(min.mismatch, max.mismatch)
+    with.indels <- Biostrings:::normargWithIndels(with.indels)
+    fixed <- Biostrings:::normargFixed(fixed, subject)
+    algo <- Biostrings:::selectAlgo(algo, pattern, max.mismatch, min.mismatch, with.indels, fixed)
+    C_ans <- .Call2("XStringSet_vmatch_pattern", pattern, subject, max.mismatch, min.mismatch, 
+                    with.indels, fixed, algo, "MATCHES_AS_RANGES", PACKAGE="Biostrings")
+    unlisted_ans <- IRanges(start=unlist(C_ans[[1L]], use.names=FALSE), width=unlist(C_ans[[2L]], use.names=FALSE))
+    relist(unlisted_ans, C_ans[[1L]])
+  }
+  
+  
   suppressMessages({
     library(ShortRead)
     library(Biostrings)
@@ -80,6 +106,10 @@ demultiplexDoublePaired4files <- function(primersFile, t2s, fastqR1In, fastqR2In
   ## width filtering by taking the longest of the two primers
   widthCutOff <- max(width(head(sread(primers), 1)), width(tail(sread(primers), 1)))
 
+  #### collect headers of each sample, to check whether we have reads ascribed to multiple samples (not possible, only happen if we are too permissive with allowedMis)
+  list_headers_sample <- c()
+  list_samples        <- c()
+  
   # dummy counter
   cpt <- 1
   repeat {
@@ -123,14 +153,16 @@ demultiplexDoublePaired4files <- function(primersFile, t2s, fastqR1In, fastqR2In
       }
 
       ### searching the fwd primer in R1
-      id.fwd.R1 <- vmatchPattern(fwd, sread(narrow(fqR1IN_, start = 1, end = as.numeric(nchar(fwd)))), fixed=FALSE, max.mismatch=allowedMis)
+      id.fwd.R1 <- vmatchPattern2(fwd, sread(narrow(fqR1IN_, start = 1, end = as.numeric(nchar(fwd)))), fixed=FALSE, 
+                                  max.mismatch=allowedMis, with.indels = withIndels)
       # get the indexing
       id.fwd.R1.x <- elementNROWS(id.fwd.R1)
       tmpR1fwd         <- fqR1IN_[which(id.fwd.R1.x==1)]
       tmpR2fwd.for.rev <- fqR2IN_[which(id.fwd.R1.x==1)]
 
       ### searching the fwd primer in R2
-      id.fwd.R2 <- vmatchPattern(fwd, sread(narrow(fqR2IN_, start = 1, end = as.numeric(nchar(fwd)))), fixed=FALSE, max.mismatch=allowedMis)
+      id.fwd.R2 <- vmatchPattern2(fwd, sread(narrow(fqR2IN_, start = 1, end = as.numeric(nchar(fwd)))), fixed=FALSE, 
+                                  max.mismatch=allowedMis, with.indels = withIndels)
       # get the indexing
       id.fwd.R2.x <- elementNROWS(id.fwd.R2)
       tmpR2fwd         <- fqR2IN_[which(id.fwd.R2.x==1)]
@@ -151,14 +183,16 @@ demultiplexDoublePaired4files <- function(primersFile, t2s, fastqR1In, fastqR2In
         sample <- subset(t2s_fwdComb, t2s_fwdComb$reverse == revComb)[,"sample"]
 
         ### searching the rev primer in the reads of R2 that matched the R1fwd
-        id.rev.R2 <- vmatchPattern(rev, sread(narrow(tmpR2fwd.for.rev, start = 1, end = as.numeric(nchar(rev)))), fixed=FALSE, max.mismatch=allowedMis)
+        id.rev.R2 <- vmatchPattern2(rev, sread(narrow(tmpR2fwd.for.rev, start = 1, end = as.numeric(nchar(rev)))), fixed=FALSE, 
+                                    max.mismatch=allowedMis, with.indels = withIndels)
         # get the indexing
         id.rev.R2.x     <- elementNROWS(id.rev.R2)
         ## These are the reads that match the fwd in R1 and rev in R2 (but now switched orientation)
         tmpR2fwd.rev.ok <- tmpR2fwd.for.rev[which(id.rev.R2.x==1)]
 
         ### searching the rev primer in the reads of R1 that matched the R2fwd
-        id.rev.R1 <- vmatchPattern(rev, sread(narrow(tmpR1fwd.for.rev, start = 1, end = as.numeric(nchar(rev)))), fixed=FALSE, max.mismatch=allowedMis)
+        id.rev.R1 <- vmatchPattern2(rev, sread(narrow(tmpR1fwd.for.rev, start = 1, end = as.numeric(nchar(rev)))), fixed=FALSE, 
+                                    max.mismatch=allowedMis, with.indels = withIndels)
         # get the indexing
         id.rev.R1.x <- elementNROWS(id.rev.R1)
         ## These are the reads that match the rev in R1 and fwd in R2 (but now switched orientation)
@@ -166,13 +200,15 @@ demultiplexDoublePaired4files <- function(primersFile, t2s, fastqR1In, fastqR2In
 
         ##### NOW reverse primer
         ## searching reverse in R1
-        id.rev.R1 <- vmatchPattern(rev, sread(narrow(fqR1IN_, start = 1, end = as.numeric(nchar(rev)))), fixed=FALSE, max.mismatch=allowedMis)
+        id.rev.R1 <- vmatchPattern2(rev, sread(narrow(fqR1IN_, start = 1, end = as.numeric(nchar(rev)))), fixed=FALSE, 
+                                    max.mismatch=allowedMis, with.indels = withIndels)
         # get the indexing
         id.rev.R1.x <- elementNROWS(id.rev.R1)
         tmpR1rev         <- fqR1IN_[which(id.rev.R1.x==1)]
         tmpR2rev.for.fwd <- fqR2IN_[which(id.rev.R1.x==1)]
         # searching forward in the reads of R2 that matched the R2rev
-        id.rev.R2 <- vmatchPattern(fwd, sread(narrow(tmpR2rev.for.fwd, start = 1, end = as.numeric(nchar(fwd)))), fixed=FALSE, max.mismatch=allowedMis)
+        id.rev.R2 <- vmatchPattern2(fwd, sread(narrow(tmpR2rev.for.fwd, start = 1, end = as.numeric(nchar(fwd)))), fixed=FALSE, 
+                                    max.mismatch=allowedMis, with.indels = withIndels)
         # get the indexing
         id.rev.R2.x     <- elementNROWS(id.rev.R2)
         ## These are the reads that start with the rev in R1 and fwd in R2 (but now switched orientation)
@@ -180,13 +216,15 @@ demultiplexDoublePaired4files <- function(primersFile, t2s, fastqR1In, fastqR2In
         tmpR2rev.fwd.ok <- tmpR2rev.for.fwd[which(id.rev.R2.x==1)]
 
         ## searching reverse in R2
-        id.rev.R2 <- vmatchPattern(rev, sread(narrow(fqR2IN_, start = 1, end = as.numeric(nchar(rev)))), fixed=FALSE, max.mismatch=allowedMis)
+        id.rev.R2 <- vmatchPattern2(rev, sread(narrow(fqR2IN_, start = 1, end = as.numeric(nchar(rev)))), fixed=FALSE, 
+                                    max.mismatch=allowedMis, with.indels = withIndels)
         # get the indexing
         id.rev.R2.x <- elementNROWS(id.rev.R2)
         tmpR2rev         <- fqR2IN_[which(id.rev.R2.x==1)]
         tmpR1rev.for.fwd <- fqR1IN_[which(id.rev.R2.x==1)]
         # searching forward in the reads of R2 that matched the R2rev
-        id.rev.R2 <- vmatchPattern(fwd, sread(narrow(tmpR1rev.for.fwd, start = 1, end = as.numeric(nchar(fwd)))), fixed=FALSE, max.mismatch=allowedMis)
+        id.rev.R2 <- vmatchPattern2(fwd, sread(narrow(tmpR1rev.for.fwd, start = 1, end = as.numeric(nchar(fwd)))), fixed=FALSE, 
+                                    max.mismatch=allowedMis, with.indels = withIndels)
         # get the indexing
         id.rev.R2.x     <- elementNROWS(id.rev.R2)
         ## These are the reads that start with the rev in R2 and fwd in R1 (but now switched orientation)
@@ -205,6 +243,10 @@ demultiplexDoublePaired4files <- function(primersFile, t2s, fastqR1In, fastqR2In
         stats[sample,"NNNN"] <- stats[sample,"NNNN"] + ((length(tmpR1fwd.rev.ok) - length(tmpR1fwd.rev.exp))) + ((length(tmpR1rev.fwd.ok) - length(tmpR1rev.fwd.exp))) + ((length(tmpR2fwd.rev.ok) - length(tmpR2fwd.rev.exp))) + ((length(tmpR2rev.fwd.ok) - length(tmpR2rev.fwd.exp)))
         stats[sample,"R1.R2.out"] <- stats[sample,"R1.R2.out"] + length(tmpR1fwd.rev.exp) + length(tmpR1rev.fwd.exp) + length(tmpR2fwd.rev.exp) + length(tmpR2rev.fwd.exp)
 
+        ### collect header of R1fwd.rev
+        list_headers_sample <- c(list_headers_sample, as.character(id(tmpR1fwd.rev.ok)))
+        list_samples        <- c(list_samples, rep(sample, length(tmpR1fwd.rev.ok)))
+        
         # and write the fastq (+ 1 to start just after the primer, "a" because we use the streamer)
         writeFastq(narrow(tmpR1fwd.rev.exp, start = nchar(fwd)+1, end = width(tmpR1fwd.rev.exp)), paste0(outputFolder,"/", sample, "_R1fwd.rev.fastq.gz"), "a")
         writeFastq(narrow(tmpR1rev.fwd.exp, start = nchar(rev)+1, end = width(tmpR1rev.fwd.exp)), paste0(outputFolder,"/", sample, "_R1rev.fwd.fastq.gz"), "a")
@@ -227,6 +269,21 @@ demultiplexDoublePaired4files <- function(primersFile, t2s, fastqR1In, fastqR2In
   stats[,"unique.reads"] <- stats[,"R1.R2.out"] / 2
   stats <- data.frame(SampleID = rownames(stats), stats)
   write.table(stats, paste0(outputFolder, "/00_Stats_demultiplexing_", unique(t2s$run), ".tsv"), sep = "\t", quote = F, row.names = F)
+  
+  ## make a dataframe of headers to check
+  header_df <- data.frame(samples = list_samples, headers = list_headers_sample)
+  if(nrow(header_df) != length(unique(header_df$headers))) {
+    ## export it 
+    prob <- names(table(header_df$headers)[table(header_df$headers)>1])
+    header_df$problematic <- ifelse(header_df$headers %in% prob, TRUE, FALSE)
+    header_df <- header_df[order(header_df$headers),]
+    header_df <- subset(header_df, header_df$problematic == T)
+    write.table(header_df, paste0(outputFolder, "/01_Problematic_reads_", unique(t2s$run), ".tsv"), sep = "\t", quote = F, row.names = F)
+    warning("There are ", length(prob), "/", stats["total","unique.reads"], " reads that have been ascribed to multiple samples, see ", 
+            paste0("01_problematic_reads_", unique(t2s$run), ".tsv"), " file for details.\n--> You should reduce the 'allowedMis' parameter")
+    
+  }
+  
   ## free memory
   rm(tmpR1fwd.rev.exp, tmpR1rev.fwd.exp, tmpR2fwd.rev.exp, tmpR2rev.fwd.exp)
   rm(tmpR1fwd.rev.ok, tmpR1rev.fwd.ok, tmpR2fwd.rev.ok, tmpR2rev.fwd.ok)
@@ -237,9 +294,9 @@ demultiplexDoublePaired4files <- function(primersFile, t2s, fastqR1In, fastqR2In
   time.taken <- end.time - start.time
   if (units(time.taken) == "secs") {
     time.taken_num <- round(as.numeric(end.time - start.time), 2)  ## in seconds
-    message(libID, ": demultiplexed ", stats["total","unique.reads"], " reads (", round(stats["total","unique.reads"] *100 / stats["total","R1.R2.in"], 1)  ,"%). it took ", round(time.taken_num, 2), " seconds")
+    message(libID, ": demultiplexed ", stats["total","unique.reads"], " reads (", round(stats["total","unique.reads"] *100 / (stats["total","R1.R2.in"]/2), 1)  ,"%). it took ", round(time.taken_num, 2), " seconds")
   } else {
     time.taken_num <- round(as.numeric(end.time - start.time), 2) / 60 ## in hours (after a minute, minutes is the default unit)
-    message(libID, ": demultiplexed ", stats["total","unique.reads"], " reads (", round(stats["total","unique.reads"] *100 / stats["total","R1.R2.in"], 1)  ,"%). it took ", round(time.taken_num, 2), " hours")
+    message(libID, ": demultiplexed ", stats["total","unique.reads"], " reads (", round(stats["total","unique.reads"] *100 / (stats["total","R1.R2.in"]/2), 1)  ,"%). it took ", round(time.taken_num, 2), " hours")
   }
 }

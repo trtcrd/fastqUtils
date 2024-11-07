@@ -1,5 +1,6 @@
 
-demultiplexDoublePaired <- function(primersFile, t2s, fastqR1In, fastqR2In, allowedMis = 0, outputFolder = "demult", overwrite = F, splitHeader = " ", chunkSize = 1000000, progressBar = T) {
+demultiplexDoublePaired <- function(primersFile, t2s, fastqR1In, fastqR2In, allowedMis = 0, outputFolder = "demult",
+                                    overwrite = F, withIndels = F, splitHeader = " ", chunkSize = 1000000, progressBar = T) {
 
   ## to do, trim hoverhang...
   ## compared to DTD in SLIM, with the first function we did not filter NNNNNNN reads, that passed and were probably filter in dada2
@@ -7,6 +8,31 @@ demultiplexDoublePaired <- function(primersFile, t2s, fastqR1In, fastqR2In, allo
 
   # primersFile is a name of a fasta file
   # t2s is a tag to sample array containing a single multiplexed library "run", "sample, "forward", "reverse"
+  
+  ## vmatchPattern with indels allowed: the base function does not work: "vmatchPattern() does not support indels yet" ?? 
+  # found this here: https://support.bioconductor.org/p/58350/
+  vmatchPattern2 <- function(pattern, subject,
+                             max.mismatch=0, min.mismatch=0,
+                             with.indels=FALSE, fixed=TRUE,
+                             algorithm="auto")
+  {
+    if (!is(subject, "XStringSet")) subject <- Biostrings:::XStringSet(NULL, subject)
+    algo <- Biostrings:::normargAlgorithm(algorithm)
+    if (Biostrings:::isCharacterAlgo(algo)) stop("'subject' must be a single (non-empty) string ", "for this algorithm")
+    pattern <- Biostrings:::normargPattern(pattern, subject)
+    max.mismatch <- Biostrings:::normargMaxMismatch(max.mismatch)
+    min.mismatch <- Biostrings:::normargMinMismatch(min.mismatch, max.mismatch)
+    with.indels <- Biostrings:::normargWithIndels(with.indels)
+    fixed <- Biostrings:::normargFixed(fixed, subject)
+    algo <- Biostrings:::selectAlgo(algo, pattern, max.mismatch, min.mismatch, with.indels, fixed)
+    C_ans <- .Call2("XStringSet_vmatch_pattern", pattern, subject, max.mismatch, min.mismatch, 
+                    with.indels, fixed, algo, "MATCHES_AS_RANGES", PACKAGE="Biostrings")
+    unlisted_ans <- IRanges(start=unlist(C_ans[[1L]], use.names=FALSE), width=unlist(C_ans[[2L]], use.names=FALSE))
+    relist(unlisted_ans, C_ans[[1L]])
+  }
+  
+  
+  
 
   suppressMessages({
     library(ShortRead)
@@ -47,7 +73,8 @@ demultiplexDoublePaired <- function(primersFile, t2s, fastqR1In, fastqR2In, allo
   }
   # uniqueness of primer combinations
   if (length(table(paste0(t2s$forward, "_", t2s$reverse))) < nrow(t2s)) {
-    stop(libID, ": some primer combinations are duplicated, please check and fix ", names(table(paste0(t2s$forward, "_", t2s$reverse))[table(paste0(t2s$forward, "_", t2s$reverse))>1]))
+    stop(libID, ": some primer combinations are duplicated, please check and fix ", 
+         names(table(paste0(t2s$forward, "_", t2s$reverse))[table(paste0(t2s$forward, "_", t2s$reverse))>1]))
   }
 
 
@@ -81,6 +108,11 @@ demultiplexDoublePaired <- function(primersFile, t2s, fastqR1In, fastqR2In, allo
 
   ## width filtering by taking the longest of the two primers
   widthCutOff <- max(width(head(sread(primers), 1)), width(tail(sread(primers), 1)))
+  
+  #### collect headers of each sample, to check whether we have reads ascribed to multiple samples (not possible, only happen if we are too permissive with allowedMis)
+  list_headers_sample <- c()
+  list_samples        <- c()
+  
 
   # dummy counter
   cpt <- 1
@@ -125,7 +157,8 @@ demultiplexDoublePaired <- function(primersFile, t2s, fastqR1In, fastqR2In, allo
       }
 
       ### searching the primer
-      idy <- vmatchPattern(fwd, sread(narrow(fqR2IN_, start = 1, end = as.numeric(nchar(fwd)))), fixed=FALSE, max.mismatch=allowedMis)
+      idy <- vmatchPattern2(fwd, sread(narrow(fqR2IN_, start = 1, end = as.numeric(nchar(fwd)))), 
+                            fixed=FALSE, max.mismatch=allowedMis, with.indels = withIndels)
       # get the indexing
       yy <- elementNROWS(idy)
       ## if fwd found in R2, we swap the read from R2 file to R1 file and vice versa
@@ -136,7 +169,8 @@ demultiplexDoublePaired <- function(primersFile, t2s, fastqR1In, fastqR2In, allo
       fqR2IN_[which(yy==1)] <- tmpR1
       ####
       # redo the indexing in the R1
-      idx <- vmatchPattern(fwd, sread(narrow(fqR1IN_, start = 1, end =as.numeric(nchar(fwd)))), fixed=FALSE, max.mismatch=allowedMis)
+      idx <- vmatchPattern2(fwd, sread(narrow(fqR1IN_, start = 1, end =as.numeric(nchar(fwd)))), 
+                            fixed=FALSE, max.mismatch=allowedMis, with.indels = withIndels)
       # get the indexing
       xx <- elementNROWS(idx)
       tmpR1 <- fqR1IN_[which(xx==1)]
@@ -165,7 +199,8 @@ demultiplexDoublePaired <- function(primersFile, t2s, fastqR1In, fastqR2In, allo
         stats["total","R1.R2.shorter.than.primer"] <- stats["total","R1.R2.shorter.than.primer"] + (length(tmpR1) - length(tmpR1_)) + (length(tmpR2) - length(tmpR2_))
 
         # search rev primer in R2 reads
-        idy <- vmatchPattern(rev, sread(narrow(tmpR2_, start = 1, end = nchar(rev))), fixed=FALSE, max.mismatch=allowedMis)
+        idy <- vmatchPattern2(rev, sread(narrow(tmpR2_, start = 1, end = nchar(rev))), fixed=FALSE, 
+                              max.mismatch=allowedMis, with.indels = withIndels)
         # check fwd primer in rev comp reads
         yy <- elementNROWS(idy)
         ## get the reads
@@ -181,6 +216,10 @@ demultiplexDoublePaired <- function(primersFile, t2s, fastqR1In, fastqR2In, allo
         stats[sample,"NNNN"] <- stats[sample,"NNNN"] + ((length(tmpR1_) - length(tmpR1_N))) + ((length(tmpR2_) - length(tmpR2_N)))
         stats[sample,"R1.R2.out"] <- stats[sample,"R1.R2.out"] + length(tmpR1_N) + length(tmpR2_N)
 
+        ### collect header of R1
+        list_headers_sample <- c(list_headers_sample, as.character(id(tmpR1_N)))
+        list_samples        <- c(list_samples, rep(sample, length(tmpR1_N)))
+        
         # and write the fastq (+ 1 to start just after the primer, "a" because we use the streamer)
         writeFastq(narrow(tmpR1_N, start = nchar(fwd)+1, end = width(tmpR1_N)), paste0(outputFolder,"/", sample, "_fwd.fastq.gz"), "a")
         writeFastq(narrow(tmpR2_N, start = nchar(rev)+1, end = width(tmpR2_N)), paste0(outputFolder,"/", sample, "_rev.fastq.gz"), "a")
@@ -201,6 +240,21 @@ demultiplexDoublePaired <- function(primersFile, t2s, fastqR1In, fastqR2In, allo
   stats[,"unique.reads"] <- stats[,"R1.R2.out"] / 2
   stats <- data.frame(SampleID = rownames(stats), stats)
   write.table(stats, paste0(outputFolder, "/00_Stats_demultiplexing_", unique(t2s$run), ".tsv"), sep = "\t", quote = F, row.names = F)
+  
+  ## make a dataframe of headers to check
+  header_df <- data.frame(samples = list_samples, headers = list_headers_sample)
+  if(nrow(header_df) != length(unique(header_df$headers))) {
+    ## export it 
+    prob <- names(table(header_df$headers)[table(header_df$headers)>1])
+    header_df$problematic <- ifelse(header_df$headers %in% prob, TRUE, FALSE)
+    header_df <- header_df[order(header_df$headers),]
+    header_df <- subset(header_df, header_df$problematic == T)
+    write.table(header_df, paste0(outputFolder, "/01_Problematic_reads_", unique(t2s$run), ".tsv"), sep = "\t", quote = F, row.names = F)
+    warning("There are ", length(prob), "/", stats["total","unique.reads"], " reads that have been ascribed to multiple samples, see ", 
+            paste0("01_problematic_reads_", unique(t2s$run), ".tsv"), " file for details.\n--> You should reduce the 'allowedMis' parameter")
+    
+  }
+  
   ## free memory
   rm(tmpR1, tmpR2, tmpR1_, tmpR2_, fqR1IN_, fqR2IN_, fqR1IN, fqR2IN)
   invisible(gc())
@@ -209,9 +263,9 @@ demultiplexDoublePaired <- function(primersFile, t2s, fastqR1In, fastqR2In, allo
   time.taken <- end.time - start.time
   if (units(time.taken) == "secs") {
     time.taken_num <- round(as.numeric(end.time - start.time), 2)  ## in seconds
-    message(libID, ": demultiplexed ", stats["total","unique.reads"], " reads (", round(stats["total","unique.reads"] *100 / stats["total","R1.R2.in"], 1)  ,"%). it took ", round(time.taken_num, 2), " seconds")
+    message(libID, ": demultiplexed ", stats["total","unique.reads"], " reads (", round(stats["total","unique.reads"] *100 / (stats["total","R1.R2.in"]/2), 1)  ,"%). it took ", round(time.taken_num, 2), " seconds")
   } else {
     time.taken_num <- round(as.numeric(end.time - start.time), 2) / 60 ## in hours (after a minute, minutes is the default unit)
-    message(libID, ": demultiplexed ", stats["total","unique.reads"], " reads (", round(stats["total","unique.reads"] *100 / stats["total","R1.R2.in"], 1)  ,"%). it took ", round(time.taken_num, 2), " hours")
+    message(libID, ": demultiplexed ", stats["total","unique.reads"], " reads (", round(stats["total","unique.reads"] *100 / (stats["total","R1.R2.in"]/2), 1)  ,"%). it took ", round(time.taken_num, 2), " hours")
   }
 }

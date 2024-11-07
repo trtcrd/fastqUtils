@@ -16,7 +16,7 @@ Demultiplexing an illumina amplicon library without accounting for possible mixe
   \item{t2s}{A "tag-to-sample" .csv file containing all informations for demultiplexing samples of a single library. Must contains columns names "run" (for library name, to.do: harmonize this field across functions), "sample" (sample name, cannot be duplicated in a given library), "forward" and "reverse" (for the tagged primers combination).}
   \item{fastqR1In}{Path to the R1 fastq file.}
   \item{fastqR2In}{Path to the R2 fastq file.}
-  \item{allowedMis}{Number of mismatches allowed in searching primers sequences in the reads (default = 0).}
+  \item{allowedMis}{Number of mismatches allowed in searching primers sequences in the reads (default = 0). If you set it too high (i.e. 2 or more), you may have reads ascribed to multiple samples. In that case, a warning will be thrown with a file with more details.}
   \item{outputFolder}{Output folder. Can be specified. Default is "demult".}
   \item{overwrite}{If outputFolder already exists, will throw an error. Shall we overwrite the folder (default = FALSE)?}
   \item{splitHeader}{Character for parsing the fastq header names and checking consistency between R1 and R2 files (default = " "). Most likely not to be touched, unless a specific error about that is thrown.}
