@@ -4,17 +4,21 @@
 \title{Demultiplexing a nanopore amplicon library}
 
 \description{
-Demultiplexing a nanopore library that is double tagged, i.e. forward and reverse primers. Reads are re-oriented using the forward primer.
+Demultiplexing a nanopore library (double tags, or dual indexing of both forward and reverse primers). Reads are re-oriented using the forward primer.
+Dual indexing is NOT optimal here, as reads can be only partially cover the target fragment (i.e. not contain primer sequence). (function deevloped for testing purposes)
 }
 
 \usage{
-  demultiplexNanopore(primersFile, t2s, fastqIn, allowedMis = 0, trim = T, withIndels = F, outputFolder = "demult", overwrite = F, chunkSize = 100000, progressBar = T)
+  demultiplexNanopore(primersFile, t2s, fastqIn,
+    allowedMis = 0, trim = T, withIndels = F,
+    outputFolder = "demult", overwrite = F,
+    chunkSize = 100000, progressBar = T)
 }
 
 \arguments{
   \item{primersFile}{Path to a fasta file containing tagged primers names and sequences).}
   \item{t2s}{A "tag-to-sample" .csv file containing all informations for demultiplexing samples of a single library. Must contains columns names "run" (for library name, to.do: harmonize this field across functions), "sample" (sample name, cannot be duplicated in a given library), "forward" and "reverse" (for the tagged primers combination).}
-  \item{fastqIn}{Path to the R1 fastq file.}
+  \item{fastqIn}{Path to the fastq file.}
   \item{allowedMis}{Number of mismatches allowed in searching primers sequences in the reads (default = 0). If you set it too high (i.e. 2 or more), you may have reads ascribed to multiple samples. In that case, a warning will be thrown with a file with more details.}
   \item{trim}{Trimming the primers from the reads? Default = T}
   \item{withIndels}{Allow indels when searching for the primers? Default = F}

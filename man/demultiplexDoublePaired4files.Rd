@@ -4,11 +4,13 @@
 \title{Demultiplexing illumina amplicon libraries}
 
 \description{
-Demultiplexing an illumina amplicon library and account for mixed orientation of reads in R1 and R2.
+Demultiplexing an illumina amplicon library (double tags, or dual indexing) and account for mixed orientation of reads in R1 and R2.
 }
 
 \usage{
-  demultiplexDoublePaired4files(primersFile, t2s, fastqR1In, fastqR2In, allowedMis = 0, outputFolder = "demult", overwrite = F, splitHeader = " ", chunkSize = 1000000, progressBar = T)
+  demultiplexDoublePaired4files(primersFile, t2s, fastqR1In, fastqR2In,
+    allowedMis = 0, outputFolder = "demult", overwrite = F,
+    splitHeader = " ", chunkSize = 1000000, progressBar = T)
 }
 
 \arguments{

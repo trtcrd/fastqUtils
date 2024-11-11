@@ -8,7 +8,8 @@ Runs the default dada2 workflow demultiplexed libraries (where possible mixed or
 }
 
 \usage{
-  dada2workflow(params, t2s, inputFolder = NULL, outputFolder = NULL, overwrite = F, novaseq = T, minLen = 60, cores_per_job = 4)
+  dada2workflow(params, t2s, inputFolder = NULL, outputFolder = NULL,
+    overwrite = F, novaseq = T, minLen = 60, cores_per_job = 4)
 }
 
 

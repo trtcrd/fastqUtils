@@ -8,7 +8,9 @@ Randomly sample the fastq files of a multiplexed library and count the number of
 }
 
 \usage{
-  taggedPrimersDistrib(primersFile, t2s, fastqR1In, fastqR2In, allowedMis = 0, outputFolder = "demult", subsample = .05, splitHeader = " ", progressBar = T)
+  taggedPrimersDistrib(primersFile, t2s, fastqR1In, fastqR2In,
+    allowedMis = 0, outputFolder = "demult", subsample = .05,
+    splitHeader = " ", progressBar = T)
 }
 
 \arguments{

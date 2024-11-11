@@ -15,7 +15,7 @@ remotes::install_github("trtcrd/fastqUtils")
 The current version contains the following functions:
 
 + **demultRun()**
-Process a list of illumina libraries in parallel (double tagged or dual-indexed). This function is a wrapper of the demultiplexDoublePaired() function (if not accounting fior read orientation) or of the demultiplexDoublePaired4files() function (if accounting for reads mixed orientation). It also run the taggedPrimersDistrib() function on the libraries.
+Process a list of illumina libraries in parallel (double tagged or dual-indexed). This function is a wrapper of the demultiplexDoublePaired() function (if not accounting for read orientation) or of the demultiplexDoublePaired4files() function (if accounting for reads mixed orientation). It also runs the taggedPrimersDistrib() function on the libraries.
 +  **dada2workflow()**
 Runs the dada2 default workflow on the demultiplexed libraries (where mixed orientation was not accounted for)
 + **dada2workflow4files()**
@@ -26,11 +26,13 @@ Demultiplex an illumina library (not accounting for possible reads mixed orienta
 Demultiplex an illumina library (accounting for possible reads mixed orientation)
 + **taggedPrimersDistrib()**
 Sample a multiplexed library and count the reads obtained for each possible combination of tagged primer
++ **demultiplexNanopore()**
+Demultiplex a nanopore library
 
 ## Input file format
 
 Three files are mandatory:
-The "params" file, that contains all the instructions to demultiplex the libraries.
+The 'params' file, which contains all the instructions to demultiplex the libraries.
 
 library_name|primers|R1|R2|
 --- | --- | --- | --- |
@@ -75,7 +77,7 @@ There is two wrappers that can be called sequentially:
 
 ```
 library(fastqUtils)
-demultRun(params = "run_params.csv", t2s = "t2s_run_test.csv", accountMixedOrientation = T, cores = 4)
+demultRun(params = "run_params.csv", t2s = "t2s_run_test.csv", accountMixedOrientation = TRUE, cores = 4)
 dada2workflow4files(params = "run_params.csv", t2s = "t2s_run_test.csv", cores_per_job = 2)
 ```
 

@@ -8,7 +8,8 @@ Runs the default dada2 workflow demultiplexed libraries (where mixed orientation
 }
 
 \usage{
-  dada2workflow4files(params, t2s, inputFolder = NULL, outputFolder = NULL, overwrite = F, novaseq = T, minLen = 60, cores_per_job = 4)
+  dada2workflow4files(params, t2s, inputFolder = NULL, outputFolder = NULL,
+    overwrite = F, novaseq = T, minLen = 60, cores_per_job = 4)
 }
 
 

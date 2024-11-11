@@ -9,7 +9,9 @@ Demultiplexing a list of illumina amplicon libraries in parallel.
 
 
 \usage{
-  demultRun(params, t2s, accountMixedOrientation = F, allowedMis = 0, outputFolder = NULL, overwrite = F, cores = 4, splitHeader = " ", chunkSize = 1000000)
+  demultRun(params, t2s, accountMixedOrientation = F,
+    allowedMis = 0, outputFolder = NULL, overwrite = F,
+    cores = 4, splitHeader = " ", chunkSize = 1000000)
 }
 
 
