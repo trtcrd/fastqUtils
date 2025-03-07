@@ -9,8 +9,8 @@ Demultiplexing an illumina amplicon library (double tags, or dual indexing) with
 
 \usage{
   demultiplexDoublePaired(primersFile, t2s, fastqR1In, fastqR2In,
-    allowedMis = 0, outputFolder = "demult", overwrite = F,
-    splitHeader = " ", chunkSize = 1000000, progressBar = T)
+    allowedMis = 0, outputFolder = "demult", overwrite = F, withIndels = F, 
+    openEnded = NULL, splitHeader = " ", chunkSize = 1000000, progressBar = T)
 }
 
 \arguments{
@@ -21,6 +21,8 @@ Demultiplexing an illumina amplicon library (double tags, or dual indexing) with
   \item{allowedMis}{Number of mismatches allowed in searching primers sequences in the reads (default = 0). If you set it too high (i.e. 2 or more), you may have reads ascribed to multiple samples. In that case, a warning will be thrown with a file with more details.}
   \item{outputFolder}{Output folder. Can be specified. Default is "demult".}
   \item{overwrite}{If outputFolder already exists, will throw an error. Shall we overwrite the folder (default = FALSE)?}
+  \item{withIndels}{Allow indels in the primer search (default = FALSE)?}
+  \item{openEnded}{Do you want to search the primer in the reads beyond its length (for unusual datasets, ie. where the primer starts after the beginning of the read) (default = NULL)?}
   \item{splitHeader}{Character for parsing the fastq header names and checking consistency between R1 and R2 files (default = " "). Most likely not to be touched, unless a specific error about that is thrown.}
   \item{chunkSize}{How many reads to be processed per batch (default = 1000000). The higher the number, the more RAM is needed. Default involves about 1 Go per library.}
   \item{progressBar}{Showing a progress bar. Default = T.}

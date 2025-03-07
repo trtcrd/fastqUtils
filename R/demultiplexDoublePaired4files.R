@@ -1,7 +1,7 @@
 
 demultiplexDoublePaired4files <- function(primersFile, t2s, fastqR1In, fastqR2In, allowedMis = 0, 
                                           outputFolder = "demult", overwrite = F, splitHeader = " ", withIndels = F,
-                                          chunkSize = 1000000, progressBar = T) {
+                                          openEnded = NULL, chunkSize = 1000000, progressBar = T) {
 
   ## to do, trim hoverhang, i.e. trimming the reverse complement rev primer in fwd reads ?
   ## option NOT to trim the primers
@@ -153,7 +153,10 @@ demultiplexDoublePaired4files <- function(primersFile, t2s, fastqR1In, fastqR2In
       }
 
       ### searching the fwd primer in R1
-      id.fwd.R1 <- vmatchPattern2(fwd, sread(narrow(fqR1IN_, start = 1, end = as.numeric(nchar(fwd)))), fixed=FALSE, 
+      if (is.null(openEnded)) end.search.fwd <- as.numeric(nchar(fwd))
+      if (!is.null(openEnded)) end.search.fwd <- openEnded
+      
+      id.fwd.R1 <- vmatchPattern2(fwd, sread(narrow(fqR1IN_, start = 1, end = end.search.fwd)), fixed=FALSE, 
                                   max.mismatch=allowedMis, with.indels = withIndels)
       # get the indexing
       id.fwd.R1.x <- elementNROWS(id.fwd.R1)
@@ -161,7 +164,7 @@ demultiplexDoublePaired4files <- function(primersFile, t2s, fastqR1In, fastqR2In
       tmpR2fwd.for.rev <- fqR2IN_[which(id.fwd.R1.x==1)]
 
       ### searching the fwd primer in R2
-      id.fwd.R2 <- vmatchPattern2(fwd, sread(narrow(fqR2IN_, start = 1, end = as.numeric(nchar(fwd)))), fixed=FALSE, 
+      id.fwd.R2 <- vmatchPattern2(fwd, sread(narrow(fqR2IN_, start = 1, end = end.search.fwd)), fixed=FALSE, 
                                   max.mismatch=allowedMis, with.indels = withIndels)
       # get the indexing
       id.fwd.R2.x <- elementNROWS(id.fwd.R2)
@@ -183,7 +186,10 @@ demultiplexDoublePaired4files <- function(primersFile, t2s, fastqR1In, fastqR2In
         sample <- subset(t2s_fwdComb, t2s_fwdComb$reverse == revComb)[,"sample"]
 
         ### searching the rev primer in the reads of R2 that matched the R1fwd
-        id.rev.R2 <- vmatchPattern2(rev, sread(narrow(tmpR2fwd.for.rev, start = 1, end = as.numeric(nchar(rev)))), fixed=FALSE, 
+        if (is.null(openEnded)) end.search.rev <- as.numeric(nchar(rev))
+        if (!is.null(openEnded)) end.search.rev <- openEnded
+        
+        id.rev.R2 <- vmatchPattern2(rev, sread(narrow(tmpR2fwd.for.rev, start = 1, end = end.search.rev)), fixed=FALSE, 
                                     max.mismatch=allowedMis, with.indels = withIndels)
         # get the indexing
         id.rev.R2.x     <- elementNROWS(id.rev.R2)
@@ -191,7 +197,7 @@ demultiplexDoublePaired4files <- function(primersFile, t2s, fastqR1In, fastqR2In
         tmpR2fwd.rev.ok <- tmpR2fwd.for.rev[which(id.rev.R2.x==1)]
 
         ### searching the rev primer in the reads of R1 that matched the R2fwd
-        id.rev.R1 <- vmatchPattern2(rev, sread(narrow(tmpR1fwd.for.rev, start = 1, end = as.numeric(nchar(rev)))), fixed=FALSE, 
+        id.rev.R1 <- vmatchPattern2(rev, sread(narrow(tmpR1fwd.for.rev, start = 1, end = end.search.rev)), fixed=FALSE, 
                                     max.mismatch=allowedMis, with.indels = withIndels)
         # get the indexing
         id.rev.R1.x <- elementNROWS(id.rev.R1)
@@ -200,14 +206,14 @@ demultiplexDoublePaired4files <- function(primersFile, t2s, fastqR1In, fastqR2In
 
         ##### NOW reverse primer
         ## searching reverse in R1
-        id.rev.R1 <- vmatchPattern2(rev, sread(narrow(fqR1IN_, start = 1, end = as.numeric(nchar(rev)))), fixed=FALSE, 
+        id.rev.R1 <- vmatchPattern2(rev, sread(narrow(fqR1IN_, start = 1, end = end.search.rev)), fixed=FALSE, 
                                     max.mismatch=allowedMis, with.indels = withIndels)
         # get the indexing
         id.rev.R1.x <- elementNROWS(id.rev.R1)
         tmpR1rev         <- fqR1IN_[which(id.rev.R1.x==1)]
         tmpR2rev.for.fwd <- fqR2IN_[which(id.rev.R1.x==1)]
         # searching forward in the reads of R2 that matched the R2rev
-        id.rev.R2 <- vmatchPattern2(fwd, sread(narrow(tmpR2rev.for.fwd, start = 1, end = as.numeric(nchar(fwd)))), fixed=FALSE, 
+        id.rev.R2 <- vmatchPattern2(fwd, sread(narrow(tmpR2rev.for.fwd, start = 1, end = end.search.fwd)), fixed=FALSE, 
                                     max.mismatch=allowedMis, with.indels = withIndels)
         # get the indexing
         id.rev.R2.x     <- elementNROWS(id.rev.R2)
@@ -216,14 +222,14 @@ demultiplexDoublePaired4files <- function(primersFile, t2s, fastqR1In, fastqR2In
         tmpR2rev.fwd.ok <- tmpR2rev.for.fwd[which(id.rev.R2.x==1)]
 
         ## searching reverse in R2
-        id.rev.R2 <- vmatchPattern2(rev, sread(narrow(fqR2IN_, start = 1, end = as.numeric(nchar(rev)))), fixed=FALSE, 
+        id.rev.R2 <- vmatchPattern2(rev, sread(narrow(fqR2IN_, start = 1, end = end.search.rev)), fixed=FALSE, 
                                     max.mismatch=allowedMis, with.indels = withIndels)
         # get the indexing
         id.rev.R2.x <- elementNROWS(id.rev.R2)
         tmpR2rev         <- fqR2IN_[which(id.rev.R2.x==1)]
         tmpR1rev.for.fwd <- fqR1IN_[which(id.rev.R2.x==1)]
         # searching forward in the reads of R2 that matched the R2rev
-        id.rev.R2 <- vmatchPattern2(fwd, sread(narrow(tmpR1rev.for.fwd, start = 1, end = as.numeric(nchar(fwd)))), fixed=FALSE, 
+        id.rev.R2 <- vmatchPattern2(fwd, sread(narrow(tmpR1rev.for.fwd, start = 1, end = end.search.fwd)), fixed=FALSE, 
                                     max.mismatch=allowedMis, with.indels = withIndels)
         # get the indexing
         id.rev.R2.x     <- elementNROWS(id.rev.R2)

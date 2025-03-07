@@ -1,6 +1,6 @@
 
 demultiplexDoublePaired <- function(primersFile, t2s, fastqR1In, fastqR2In, allowedMis = 0, outputFolder = "demult",
-                                    overwrite = F, withIndels = F, splitHeader = " ", chunkSize = 1000000, progressBar = T) {
+                                    overwrite = F, withIndels = F, openEnded = NULL, splitHeader = " ", chunkSize = 1000000, progressBar = T) {
 
   ## to do, trim hoverhang...
   ## compared to DTD in SLIM, with the first function we did not filter NNNNNNN reads, that passed and were probably filter in dada2
@@ -157,7 +157,10 @@ demultiplexDoublePaired <- function(primersFile, t2s, fastqR1In, fastqR2In, allo
       }
 
       ### searching the primer
-      idy <- vmatchPattern2(fwd, sread(narrow(fqR2IN_, start = 1, end = as.numeric(nchar(fwd)))), 
+      if (is.null(openEnded)) end.search.fwd <- as.numeric(nchar(fwd))
+      if (!is.null(openEnded)) end.search.fwd <- openEnded
+      
+      idy <- vmatchPattern2(fwd, sread(narrow(fqR2IN_, start = 1, end = end.search.fwd)), 
                             fixed=FALSE, max.mismatch=allowedMis, with.indels = withIndels)
       # get the indexing
       yy <- elementNROWS(idy)
@@ -169,7 +172,7 @@ demultiplexDoublePaired <- function(primersFile, t2s, fastqR1In, fastqR2In, allo
       fqR2IN_[which(yy==1)] <- tmpR1
       ####
       # redo the indexing in the R1
-      idx <- vmatchPattern2(fwd, sread(narrow(fqR1IN_, start = 1, end =as.numeric(nchar(fwd)))), 
+      idx <- vmatchPattern2(fwd, sread(narrow(fqR1IN_, start = 1, end = end.search.fwd)), 
                             fixed=FALSE, max.mismatch=allowedMis, with.indels = withIndels)
       # get the indexing
       xx <- elementNROWS(idx)
@@ -199,7 +202,10 @@ demultiplexDoublePaired <- function(primersFile, t2s, fastqR1In, fastqR2In, allo
         stats["total","R1.R2.shorter.than.primer"] <- stats["total","R1.R2.shorter.than.primer"] + (length(tmpR1) - length(tmpR1_)) + (length(tmpR2) - length(tmpR2_))
 
         # search rev primer in R2 reads
-        idy <- vmatchPattern2(rev, sread(narrow(tmpR2_, start = 1, end = nchar(rev))), fixed=FALSE, 
+        if (is.null(openEnded)) end.search.rev <- as.numeric(nchar(rev))
+        if (!is.null(openEnded)) end.search.rev <- openEnded
+        
+        idy <- vmatchPattern2(rev, sread(narrow(tmpR2_, start = 1, end = end.search.rev)), fixed=FALSE, 
                               max.mismatch=allowedMis, with.indels = withIndels)
         # check fwd primer in rev comp reads
         yy <- elementNROWS(idy)
