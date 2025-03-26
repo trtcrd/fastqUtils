@@ -25,6 +25,18 @@ demultRun <- function(params, t2s, accountMixedOrientation = F, allowedMis = 0, 
   }
   rownames(params) <- params$library_name
 
+  ## check if both R1 R2 exists in the path given
+  for (i in params$library_name) {
+	if (!file.exists(file = params[i,"R1"])) {
+		OK <- F
+    	stop(params[i,"R1"]) " is not found in the path given, please check")
+	}
+	if (!file.exists(file = params[i,"R2"])) {
+		OK <- F
+    	stop(params[i,"R2"]) " is not found in the path given, please check")
+	}
+  }
+
   ## check R1 R2
   if (length(unique(params$R1)) != length(unique(params$R2)))  {
     if (length(unique(params$R1)) < length(unique(params$R2))) n <- paste(params$R1[table(params$R1)[table(params$R1) > 1]], collapse = " ")
@@ -36,7 +48,7 @@ demultRun <- function(params, t2s, accountMixedOrientation = F, allowedMis = 0, 
   for (i in 1:nrow(params)) {
     if (identical(params$R1[i], params$R2[i]))  {
       OK <- F
-      stop(paste0(params$R1[i], " is the set as R1 and R2. please fix ", params$library_name[i]))
+      stop(paste0(params$R1[i], " is set for both R1 and R2. please fix ", params$library_name[i]))
     }
   }
 
