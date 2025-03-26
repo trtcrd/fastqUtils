@@ -29,11 +29,11 @@ demultRun <- function(params, t2s, accountMixedOrientation = F, allowedMis = 0, 
   for (i in params$library_name) {
 	if (!file.exists(file = params[i,"R1"])) {
 		OK <- F
-    	stop(params[i,"R1"]) " is not found in the path given, please check")
+    	stop(params[i,"R1"], " is not found in the path given, please check")
 	}
 	if (!file.exists(file = params[i,"R2"])) {
 		OK <- F
-    	stop(params[i,"R2"]) " is not found in the path given, please check")
+    	stop(params[i,"R2"], " is not found in the path given, please check")
 	}
   }
 
