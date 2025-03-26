@@ -26,15 +26,14 @@ demultRun <- function(params, t2s, accountMixedOrientation = F, allowedMis = 0, 
   rownames(params) <- params$library_name
 
   ## check if both R1 R2 exists in the path given
+  missing_files <- c()
   for (i in params$library_name) {
-	if (!file.exists(file = params[i,"R1"])) {
-		OK <- F
-    	stop(params[i,"R1"], " is not found in the path given, please check")
-	}
-	if (!file.exists(file = params[i,"R2"])) {
-		OK <- F
-    	stop(params[i,"R2"], " is not found in the path given, please check")
-	}
+    if (!file.exists(file = params[i,"R1"])) missing_files <- c(missing_files, params[i,"R1"])
+    if (!file.exists(file = params[i,"R2"])) missing_files <- c(missing_files, params[i,"R2"])
+  }
+  if (length(missing_files)>0) {
+    OK <- F
+    stop(" These files are not found in the path given, please check:\n", paste(missing_files, collapse = "\n"))
   }
 
   ## check R1 R2
