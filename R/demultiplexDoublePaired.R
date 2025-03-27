@@ -1,4 +1,3 @@
-
 demultiplexDoublePaired <- function(primersFile, t2s, fastqR1In, fastqR2In, allowedMis = 0, outputFolder = "demult",
                                     overwrite = F, withIndels = F, openEnded = NULL, splitHeader = " ", chunkSize = 1000000, progressBar = T) {
 
@@ -227,8 +226,21 @@ demultiplexDoublePaired <- function(primersFile, t2s, fastqR1In, fastqR2In, allo
         list_samples        <- c(list_samples, rep(sample, length(tmpR1_N)))
         
         # and write the fastq (+ 1 to start just after the primer, "a" because we use the streamer)
-        writeFastq(narrow(tmpR1_N, start = nchar(fwd)+1, end = width(tmpR1_N)), paste0(outputFolder,"/", sample, "_fwd.fastq.gz"), "a")
-        writeFastq(narrow(tmpR2_N, start = nchar(rev)+1, end = width(tmpR2_N)), paste0(outputFolder,"/", sample, "_rev.fastq.gz"), "a")
+        if (is.null(openEnded)) {
+        	writeFastq(narrow(tmpR1_N, start = nchar(fwd)+1, end = width(tmpR1_N)), paste0(outputFolder,"/", sample, "_fwd.fastq.gz"), "a")
+        	writeFastq(narrow(tmpR2_N, start = nchar(rev)+1, end = width(tmpR2_N)), paste0(outputFolder,"/", sample, "_rev.fastq.gz"), "a")
+        ## or export where primers was found in "openEnded" window
+        } else if (!is.null(openEnded)) {
+        ## we need to re-index :/ 
+        	idx <- vmatchPattern2(fwd, sread(narrow(tmpR1_N, start = 1, end = end.search.fwd)), 
+                            	fixed=FALSE, max.mismatch=allowedMis, with.indels = withIndels)
+            idy <- vmatchPattern2(rev, sread(narrow(tmpR2_N, start = 1, end = end.search.rev)), 
+                            	fixed=FALSE, max.mismatch=allowedMis, with.indels = withIndels)
+        
+        	writeFastq(narrow(tmpR1_N, start = as.numeric(end(idx))+1, end = width(tmpR1_N)), paste0(outputFolder,"/", sample, "_fwd.fastq.gz"), "a")
+        	writeFastq(narrow(tmpR2_N, start = as.numeric(end(idy))+1, end = width(tmpR2_N)), paste0(outputFolder,"/", sample, "_rev.fastq.gz"), "a")
+        }
+        
       }
     }
     if (progressBar) setTxtProgressBar(pb, cpt)
