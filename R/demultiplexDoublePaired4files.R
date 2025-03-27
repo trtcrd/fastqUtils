@@ -263,21 +263,17 @@ demultiplexDoublePaired4files <- function(primersFile, t2s, fastqR1In, fastqR2In
         ## or export where primers was found in "openEnded" window
         } else if (!is.null(openEnded)) {
         ## we need to re-index :/ 
-        	idx.tmpR1fwd.rev.exp <- vmatchPattern2(fwd, sread(narrow(tmpR1fwd.rev.exp, start = 1, end = end.search.fwd)), 
-                            					   fixed=FALSE, max.mismatch=allowedMis, with.indels = withIndels)
-            idx.tmpR2rev.fwd.exp <- vmatchPattern2(rev, sread(narrow(tmpR2rev.fwd.exp, start = 1, end = end.search.rev)), 
-                            					   fixed=FALSE, max.mismatch=allowedMis, with.indels = withIndels)
-        
-            idy.tmpR2fwd.rev.exp <- vmatchPattern2(fwd, sread(narrow(tmpR2fwd.rev.exp, start = 1, end = end.search.fwd)), 
-                            					   fixed=FALSE, max.mismatch=allowedMis, with.indels = withIndels)
-            idy.tmpR2rev.fwd.exp <- vmatchPattern2(rev, sread(narrow(tmpR1rev.fwd.exp, start = 1, end = end.search.rev)), 
-                            					   fixed=FALSE, max.mismatch=allowedMis, with.indels = withIndels)
-            # now export 
-        	writeFastq(narrow(tmpR1fwd.rev.exp, start = as.numeric(end(idx.tmpR1fwd.rev.exp))+1, end = width(tmpR1fwd.rev.exp)), paste0(outputFolder,"/", sample, "_R1fwd.rev.fastq.gz"), "a")
-        	writeFastq(narrow(tmpR2rev.fwd.exp, start = as.numeric(end(idx.tmpR2rev.fwd.exp))+1, end = width(tmpR1rev.fwd.exp)), paste0(outputFolder,"/", sample, "_R1rev.fwd.fastq.gz"), "a")
-        	#
-        	writeFastq(narrow(tmpR2fwd.rev.exp, start = as.numeric(end(idy.tmpR2fwd.rev.exp))+1, end = width(tmpR2fwd.rev.exp)), paste0(outputFolder,"/", sample, "_R2fwd.rev.fastq.gz"), "a")
-        	writeFastq(narrow(tmpR2rev.fwd.exp, start = as.numeric(end(idy.tmpR2rev.fwd.exp))+1, end = width(tmpR2rev.fwd.exp)), paste0(outputFolder,"/", sample, "_R2rev.fwd.fastq.gz"), "a")
+          idx.tmpR1fwd.rev.exp <- vmatchPattern2(fwd, sread(narrow(tmpR1fwd.rev.exp, start = 1, end = end.search.fwd)), fixed=FALSE, max.mismatch=allowedMis, with.indels = withIndels)
+          idx.tmpR2rev.fwd.exp <- vmatchPattern2(rev, sread(narrow(tmpR2rev.fwd.exp, start = 1, end = end.search.rev)), fixed=FALSE, max.mismatch=allowedMis, with.indels = withIndels)
+          
+          idy.tmpR2fwd.rev.exp <- vmatchPattern2(fwd, sread(narrow(tmpR2fwd.rev.exp, start = 1, end = end.search.fwd)), fixed=FALSE, max.mismatch=allowedMis, with.indels = withIndels)
+          idy.tmpR2rev.fwd.exp <- vmatchPattern2(rev, sread(narrow(tmpR1rev.fwd.exp, start = 1, end = end.search.rev)), fixed=FALSE, max.mismatch=allowedMis, with.indels = withIndels)
+          # now export 
+          writeFastq(narrow(tmpR1fwd.rev.exp, start = as.numeric(end(idx.tmpR1fwd.rev.exp))+1, end = width(tmpR1fwd.rev.exp)), paste0(outputFolder,"/", sample, "_R1fwd.rev.fastq.gz"), "a")
+          writeFastq(narrow(tmpR2rev.fwd.exp, start = as.numeric(end(idx.tmpR2rev.fwd.exp))+1, end = width(tmpR1rev.fwd.exp)), paste0(outputFolder,"/", sample, "_R1rev.fwd.fastq.gz"), "a")
+          #
+          writeFastq(narrow(tmpR2fwd.rev.exp, start = as.numeric(end(idy.tmpR2fwd.rev.exp))+1, end = width(tmpR2fwd.rev.exp)), paste0(outputFolder,"/", sample, "_R2fwd.rev.fastq.gz"), "a")
+          writeFastq(narrow(tmpR2rev.fwd.exp, start = as.numeric(end(idy.tmpR2rev.fwd.exp))+1, end = width(tmpR2rev.fwd.exp)), paste0(outputFolder,"/", sample, "_R2rev.fwd.fastq.gz"), "a")
 
         }
         
