@@ -261,11 +261,11 @@ dada2workflow4files <- function(params, t2s, inputFolder = NULL, outputFolder = 
     merger.REV <- mergePairs(dd.R1rev.fwd, drp.R1rev.fwd, dd.R2fwd.rev, drp.R2fwd.rev, trimOverhang=TRUE, verbose= F)
     sta.REV <- makeSequenceTable(merger.REV)
     rownames(sta.REV) <- gsub("_R1rev.fwd.fastq.gz", "", rownames(sta.REV))
+    ## reverse complementing the ASVs in sta.REV
+    colnames(sta.REV) <- dada2::rc(colnames(sta.REV))
 
     ## finally merging the table in same orientation and summing reads per samples
-    ## tryRC to make sure they are merged !
-    sta <- mergeSequenceTables(sta.FWD, sta.REV, tryRC = T, repeats = "sum")
-    #colnames(sta) <- rc(colnames(sta))
+    sta <- mergeSequenceTables(sta.FWD, sta.REV, repeats = "sum", tryRC = F) ## tryRC does not assure that we have good orientation
 
     # save it
     saveRDS(sta, file.path(path.rds, paste0("ASVtable_", libID, "_merger.rds")))
