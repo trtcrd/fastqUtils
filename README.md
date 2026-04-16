@@ -28,6 +28,8 @@ Demultiplex an illumina library (accounting for possible reads mixed orientation
 Sample a multiplexed library and count the reads obtained for each possible combination of tagged primer
 + **demultiplexNanopore()**
 Demultiplex a nanopore library
++ **demultiplexDoublePairedforENA()**
+Demultiplex an illumina library for submission to ENA (keep mixed orientation of R1 and R2 and trim only the tag, i.e. keep the primers in the reads)
 
 ## Input file format
 
