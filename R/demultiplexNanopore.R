@@ -143,7 +143,7 @@ demultiplexNanopore <- function(primersFile, t2s, fastqIn, allowedMis = 0, trim 
       # if primer expected right at the begining: 
       #if (!nano) idx <- vmatchPattern2(fwd, sread(narrow(fqIN.clean, start = 1, end = as.numeric(nchar(fwd)))), fixed=FALSE, max.mismatch=allowedMis, with.indels = withIndels)
       # if primer can be somewhere after (e.g. as in nanopore data), search in the first half of the read
-      idx <- vmatchPattern2(fwd, sread(narrow(fqIN.clean, start = 1, end = floor(as.numeric(width(fqIN.clean)/2)))), 
+      idx <- vmatchPattern2(fwd, sread(narrow(fqIN.clean, start = 1, end = floor(as.numeric(width(fqIN.clean)/3)))), 
                             fixed=FALSE, max.mismatch=allowedMis, with.indels = withIndels)
       
       # get the indexing
@@ -156,7 +156,7 @@ demultiplexNanopore <- function(primersFile, t2s, fastqIn, allowedMis = 0, trim 
       
       #if (!nano) idxRC <- vmatchPattern2(fwdRC, sread(narrow(fqIN.clean, start = 1, end = as.numeric(nchar(fwdRC)))), fixed=FALSE, max.mismatch=allowedMis, with.indels = withIndels)
       # if primer can be somewhere after (e.g. as in nanopore data), search in the first half of the read
-      idxRC <- vmatchPattern2(fwdRC, sread(narrow(fqIN.clean, start = 1, end = floor(as.numeric(width(fqIN.clean)/2)))), 
+      idxRC <- vmatchPattern2(fwdRC, sread(narrow(fqIN.clean, start = 1, end = floor(as.numeric(width(fqIN.clean)/3)))), 
                               fixed=FALSE, max.mismatch=allowedMis, with.indels = withIndels)
       
       # get the indexing
@@ -189,7 +189,7 @@ demultiplexNanopore <- function(primersFile, t2s, fastqIn, allowedMis = 0, trim 
         # check for the reverse at the end
         #if (!nano) idy <- vmatchPattern2(revRC, sread(narrow(tmpFastqFWD, start = (as.numeric(width(tmpFastqFWD)) - as.numeric(nchar(rev))), end = as.numeric(width(tmpFastqFWD)))), fixed=FALSE, max.mismatch=allowedMis, with.indels = withIndels)
         # check in the second half of the read
-        idy <- vmatchPattern2(revRC, sread(narrow(tmpFastqFWD, start = floor(as.numeric(width(tmpFastqFWD)/2))), 
+        idy <- vmatchPattern2(revRC, sread(narrow(tmpFastqFWD, start = floor(as.numeric(width(tmpFastqFWD)/3))), 
                                            end = as.numeric(width(tmpFastqFWD))), fixed=FALSE, max.mismatch=allowedMis, with.indels = withIndels)
         
         # get the indexing
@@ -206,9 +206,9 @@ demultiplexNanopore <- function(primersFile, t2s, fastqIn, allowedMis = 0, trim 
         
         
         ## get the final indexing of fwd and rev primers to export. 
-        idx <- vmatchPattern2(fwd, sread(narrow(tmpFastqFWD.REV.clean, start = 1, end = floor(as.numeric(width(tmpFastqFWD.REV.clean)/2)))),
+        idx <- vmatchPattern2(fwd, sread(narrow(tmpFastqFWD.REV.clean, start = 1, end = floor(as.numeric(width(tmpFastqFWD.REV.clean)/3)))),
                               fixed=FALSE, max.mismatch=allowedMis, with.indels = withIndels)
-        idy <- vmatchPattern2(revRC, sread(narrow(tmpFastqFWD.REV.clean, start = floor(as.numeric(width(tmpFastqFWD.REV.clean)/2))), end = as.numeric(width(tmpFastqFWD.REV.clean))), 
+        idy <- vmatchPattern2(revRC, sread(narrow(tmpFastqFWD.REV.clean, start = floor(as.numeric(width(tmpFastqFWD.REV.clean)/3))), end = as.numeric(width(tmpFastqFWD.REV.clean))), 
                               fixed=FALSE, max.mismatch=allowedMis, with.indels = withIndels)
         
         ## in rare case, start and end would give a negative width (especially loose matches), whe check and remove the reads, as well as throwing a warning
